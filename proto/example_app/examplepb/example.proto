@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+option go_package = "github.com/IguoChan/go-project/api/genproto/example_app/examplepb;examplepb";
+
+package examplepb;
+
+import "google/api/annotations.proto";
+import "demo_app/simplepb/simple.proto";
+
+message ExReq {
+    simplepb.SimpleRequest s = 1;
+}
+
+message ExResp {
+  int32 code = 1;
+  string value = 2;
+}
+
+service Example {
+  rpc R (ExReq) returns (ExResp) {
+    option (google.api.http) = {
+      post: "/v1/example/cyg"
+      body: "*"
+    };
+  };
+}
