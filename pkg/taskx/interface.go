@@ -19,3 +19,11 @@ type MQTasker interface {
 	Handle(msg *mqx.Msg)
 	Name() string
 }
+
+type OnceTasker interface {
+	Run() error
+	Reset()
+	Continue() bool
+	Tick() <-chan time.Time
+	Name() string
+}

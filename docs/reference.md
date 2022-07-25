@@ -10,7 +10,13 @@
 #### Coding Style
 > * [uber-go/guide 的中文翻译](https://github.com/xxjwxc/uber_go_guide_cn)
 
-### 2. GRPC
+### 2. Golang
+#### 基础书籍
+> * [Go语言圣经（中文版）](http://shouce.jb51.net/gopl-zh/index.html)
+> * [Go 语言高性能编程](https://geektutu.com/post/high-performance-go.html)
+> * [Go 语言设计与实现](https://draveness.me/golang/#go-%e8%af%ad%e8%a8%80%e8%ae%be%e8%ae%a1%e4%b8%8e%e5%ae%9e%e7%8e%b0)
+
+### 3. GRPC
 
 #### 基础教程
 ##### 入门
@@ -27,4 +33,7 @@
 > * [Go gRPC进阶-proto数据验证（九）](https://www.cnblogs.com/FireworksEasyCool/p/12761033.html)
 > * [Go gRPC进阶-gRPC转换HTTP（十）](https://www.cnblogs.com/FireworksEasyCool/p/12782137.html)
 
+##### 官网资料
+> * [grpc.io](https://grpc.io/)
+> * [github-grpc](https://github.com/grpc/grpc)
 

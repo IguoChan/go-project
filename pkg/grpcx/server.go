@@ -37,14 +37,18 @@ type Gateway struct {
 }
 
 type ServerOptions struct {
-	EtcdOpt     *etcdx.Options
-	Host        string
-	Port        int
-	GWPort      int
-	ServiceName string
+	EtcdOpt     *etcdx.Options `json:"-"`
+	Host        string         `json:"host" mapstructure:"host"`
+	Port        int            `json:"port" mapstructure:"port"`
+	Gateway     *GWOptions     `json:"gateway" mapstructure:"gateway"`
+	ServiceName string         `json:"name" mapstructure:"name"`
 
 	// logger
-	LogrusLogger *logrus.Logger
+	LogrusLogger *logrus.Logger `json:"-"`
+}
+
+type GWOptions struct {
+	Port int `json:"port" mapstructure:"port"`
 }
 
 // NewServer r&rs for at least one demo_app register
@@ -135,7 +139,7 @@ func newGrpc() (*grpc.Server, error) {
 }
 
 func NewGateway(opt *ServerOptions, gr PBGatewayRegister, grs ...PBGatewayRegister) (*Gateway, error) {
-	if opt == nil || opt.GWPort == 0 {
+	if opt == nil || opt.Gateway == nil || opt.Gateway.Port == 0 {
 		return nil, errors.New("options is nil, or gateway port is 0")
 	}
 
@@ -190,13 +194,13 @@ func (g *Gateway) Serve() error {
 	case <-time.After(time.Second): // wait 1 second, just wait for error handling
 	}
 
-	g.LoggerV2.Infof("grpc gateway start listening...:%d", g.opt.GWPort)
+	g.LoggerV2.Infof("grpc gateway start listening...:%d", g.opt.Gateway.Port)
 	server := &http.Server{
-		Addr:    fmt.Sprintf(":%d", g.opt.GWPort),
+		Addr:    fmt.Sprintf(":%d", g.opt.Gateway.Port),
 		Handler: g.mux,
 	}
 	g.hs = server
-	if err := server.ListenAndServe(); err != nil {
+	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		g.LoggerV2.Errorf("grpc gateway serve err: %v.", err)
 		g.Server.Stop()
 		return err

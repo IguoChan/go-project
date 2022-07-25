@@ -7,6 +7,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// BGTask 后台任务
 type BGTask struct {
 	ctx context.Context
 	rs  []BGTasker

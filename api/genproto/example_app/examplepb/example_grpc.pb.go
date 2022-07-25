@@ -70,7 +70,7 @@ func RegisterExampleServer(s grpc.ServiceRegistrar, srv ExampleServer) {
 	s.RegisterService(&Example_ServiceDesc, srv)
 }
 
-func _Example_R_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Example_R_Handler(srv any, ctx context.Context, dec func(any) error, interceptor grpc.UnaryServerInterceptor) (any, error) {
 	in := new(ExReq)
 	if err := dec(in); err != nil {
 		return nil, err
@@ -82,7 +82,7 @@ func _Example_R_Handler(srv interface{}, ctx context.Context, dec func(interface
 		Server:     srv,
 		FullMethod: "/examplepb.Example/R",
 	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, req any) (any, error) {
 		return srv.(ExampleServer).R(ctx, req.(*ExReq))
 	}
 	return interceptor(ctx, in, info, handler)

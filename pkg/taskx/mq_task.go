@@ -7,6 +7,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// MQTask MQ任务
 type MQTask struct {
 	ctx context.Context
 	rs  []MQTasker

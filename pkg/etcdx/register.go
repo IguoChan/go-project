@@ -63,8 +63,8 @@ func (r *Register) Registry(ctx context.Context, serviceName, addr string) error
 }
 
 func (r *Register) listenLeaseRespChan() {
-	for resp := range r.keepAliveChan {
-		r.Logger.Info(resp.String())
+	for _ = range r.keepAliveChan {
+		//r.Logger.Info(resp.String())
 	}
 	r.Logger.Warn("lease closed, cancel or timeout")
 }

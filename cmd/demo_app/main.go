@@ -1,13 +1,7 @@
 package main
 
 import (
-	"fmt"
-	"net"
 	"os"
-	"strings"
-
-	"github.com/IguoChan/go-project/pkg/etcdx"
-	"github.com/IguoChan/go-project/pkg/grpcx"
 
 	"github.com/IguoChan/go-project/internal/app/demo_app"
 	"github.com/IguoChan/go-project/pkg/appx"
@@ -18,40 +12,18 @@ func main() {
 }
 
 func Run() int {
-	app := appx.New()
+	// config
+	conf := demo_app.Conf()
+
+	// new app
+	app := appx.New(conf.ServiceName)
 
 	// add worker
 	app.AddWorker(demo_app.NewDemoWorker())
 
-	// add server
-	addrs, err := net.InterfaceAddrs()
-	if err != nil {
-		panic(err)
-	}
-	host := ""
-	for _, address := range addrs {
-		// 检查ip地址判断是否回环地址
-		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
-			if ipnet.IP.To4() != nil && strings.Contains(ipnet.IP.String(), "192.168.0") {
-				fmt.Println(ipnet.IP.String())
-				host = ipnet.IP.String()
-			}
-		}
-	}
-	opt := &grpcx.ServerOptions{
-		EtcdOpt: &etcdx.Options{
-			Addrs:  []string{"192.168.0.102:2379"},
-			TTL:    30,
-			Scheme: "grpc",
-		},
-		Host:         host,
-		Port:         9411,
-		GWPort:       9412,
-		ServiceName:  "cyg_service",
-		LogrusLogger: nil,
-	}
-	if err := app.AddGrpcGateway(opt, demo_app.NewDemoServer()); err != nil {
-		panic(err)
+	// set server
+	if err := app.SetGrpcGateway(conf.GrpcServer, demo_app.NewSimpleServer(), demo_app.NewServerStream()); err != nil {
+		return appx.ErrGrpcGateway
 	}
 
 	return app.Run()

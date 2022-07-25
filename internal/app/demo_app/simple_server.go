@@ -11,25 +11,25 @@ import (
 	"google.golang.org/grpc"
 )
 
-type DemoServer struct {
+type SimpleServer struct {
 	simplepb.UnimplementedSimpleServer
 }
 
-func NewDemoServer() DemoServer {
-	return DemoServer{}
+func NewSimpleServer() SimpleServer {
+	return SimpleServer{}
 }
 
-func (s DemoServer) RegisterPBServer(server *grpc.Server) {
+func (s SimpleServer) RegisterPBServer(server *grpc.Server) {
 	simplepb.RegisterSimpleServer(server, s)
 }
 
-func (s DemoServer) RegisterPBGateway(ctx context.Context, mux *runtime2.ServeMux, rpcAddr string, opts []grpc.DialOption) {
+func (s SimpleServer) RegisterPBGateway(ctx context.Context, mux *runtime2.ServeMux, rpcAddr string, opts []grpc.DialOption) {
 	if err := simplepb.RegisterSimpleHandlerFromEndpoint(ctx, mux, rpcAddr, opts); err != nil {
 		logrus.Errorf("register gateway failed: %+v", err)
 	}
 }
 
-func (s DemoServer) Route(ctx context.Context, request *simplepb.SimpleRequest) (*simplepb.SimpleResponse, error) {
+func (s SimpleServer) Route(ctx context.Context, request *simplepb.SimpleRequest) (*simplepb.SimpleResponse, error) {
 	hn, _ := os.Hostname()
 	res := &simplepb.SimpleResponse{
 		Code:  200,

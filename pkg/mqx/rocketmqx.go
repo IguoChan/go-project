@@ -97,7 +97,7 @@ func (r *rocketMQ) Subscribe(topic, tag, groupId string) (<-chan *Msg, error) {
 		}
 		return consumer2.ConsumeSuccess, nil
 	}); err != nil {
-		r.Logger.Error(fmt.Sprintf("[RocketMQ] subscribe err: %+v", err), map[string]interface{}{
+		r.Logger.Error(fmt.Sprintf("[RocketMQ] subscribe err: %+v", err), map[string]any{
 			rlog.LogKeyConsumerGroup: groupId,
 			rlog.LogKeyTopic:         topic,
 		})
@@ -120,7 +120,7 @@ func (r *rocketMQ) Unsubscribe(topic, tag, groupId string) error {
 	}
 
 	if err = consumer.Unsubscribe(topic); err != nil {
-		r.Logger.Error(fmt.Sprintf("[RocketMQ] unsubscribe err: %+v", err), map[string]interface{}{
+		r.Logger.Error(fmt.Sprintf("[RocketMQ] unsubscribe err: %+v", err), map[string]any{
 			rlog.LogKeyConsumerGroup: groupId,
 			rlog.LogKeyTopic:         topic,
 		})
@@ -152,7 +152,7 @@ retry:
 		if strings.Contains(err.Error(), "[TIMEOUT_CLEAN_QUEUE]broker busy") {
 			if currentTimes < r.retryTimes {
 				currentTimes++
-				r.Logger.Warning(fmt.Sprintf("[RocketMQ] send err:%+v, retry send %d times", err, currentTimes), map[string]interface{}{
+				r.Logger.Warning(fmt.Sprintf("[RocketMQ] send err:%+v, retry send %d times", err, currentTimes), map[string]any{
 					"retry": "failed",
 					"err":   err.Error(),
 				})
@@ -163,7 +163,7 @@ retry:
 		return err
 	}
 
-	r.Logger.Debug(fmt.Sprintf("[RocketMQ] SendMessageSync %s result %s", string(msg), result.String()), map[string]interface{}{
+	r.Logger.Debug(fmt.Sprintf("[RocketMQ] SendMessageSync %s result %s", string(msg), result.String()), map[string]any{
 		"send":           "success",
 		rlog.LogKeyTopic: topic,
 	})
@@ -219,7 +219,7 @@ func (r *rocketMQ) getPushConsumer(groupId, topic string) (rocketmq.PushConsumer
 			consumer2.WithConsumerModel(consumer2.Clustering),
 		)
 		if err != nil {
-			r.Logger.Error(fmt.Sprintf("[RocketMQ] new pushConsumer err: %+v", err), map[string]interface{}{
+			r.Logger.Error(fmt.Sprintf("[RocketMQ] new pushConsumer err: %+v", err), map[string]any{
 				rlog.LogKeyConsumerGroup: groupId,
 				rlog.LogKeyTopic:         topic,
 			})

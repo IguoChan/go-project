@@ -165,7 +165,7 @@ func file_examplepb_example_proto_rawDescGZIP() []byte {
 }
 
 var file_examplepb_example_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
-var file_examplepb_example_proto_goTypes = []interface{}{
+var file_examplepb_example_proto_goTypes = []any{
 	(*ExReq)(nil),                  // 0: examplepb.ExReq
 	(*ExResp)(nil),                 // 1: examplepb.ExResp
 	(*simplepb.SimpleRequest)(nil), // 2: simplepb.SimpleRequest
@@ -187,7 +187,7 @@ func file_examplepb_example_proto_init() {
 		return
 	}
 	if !protoimpl.UnsafeEnabled {
-		file_examplepb_example_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
+		file_examplepb_example_proto_msgTypes[0].Exporter = func(v any, i int) any {
 			switch v := v.(*ExReq); i {
 			case 0:
 				return &v.state
@@ -199,7 +199,7 @@ func file_examplepb_example_proto_init() {
 				return nil
 			}
 		}
-		file_examplepb_example_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
+		file_examplepb_example_proto_msgTypes[1].Exporter = func(v any, i int) any {
 			switch v := v.(*ExResp); i {
 			case 0:
 				return &v.state

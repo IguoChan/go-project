@@ -1,0 +1,8 @@
+common:
+  app_name: demo
+
+  etcd:
+    username: "hello"
+
+
+

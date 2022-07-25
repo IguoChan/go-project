@@ -1,13 +1,19 @@
 package main
 
 import (
+	"context"
 	"fmt"
-	"net"
+	"io"
+	"log"
 	"os"
-	"strings"
+	"time"
 
-	"github.com/IguoChan/go-project/internal/app/example_app"
-	"github.com/IguoChan/go-project/pkg/appx"
+	"github.com/IguoChan/go-project/api/genproto/demo_app/server_streampb"
+
+	"github.com/IguoChan/go-project/api/genproto/demo_app/simplepb"
+
+	"github.com/IguoChan/go-project/internal/app/demo_app"
+
 	"github.com/IguoChan/go-project/pkg/etcdx"
 	"github.com/IguoChan/go-project/pkg/grpcx"
 )
@@ -17,38 +23,56 @@ func main() {
 }
 
 func Run() int {
-	app := appx.New()
+	opts := make(map[string]*grpcx.ClientOptions)
+	opts["demo"] = &grpcx.ClientOptions{
+		EtcdOpt: &etcdx.Options{
+			Addrs:       []string{"192.168.0.102:2379"},
+			DialTimeout: 5 * time.Second,
+			TTL:         30,
+		},
+		ServiceName: "demo",
+	}
 
-	// add server
-	addrs, err := net.InterfaceAddrs()
+	dc := demo_app.NewRpcClient(opts)
+	s, err := dc.Simple()
 	if err != nil {
 		panic(err)
 	}
-	host := ""
-	for _, address := range addrs {
-		// 检查ip地址判断是否回环地址
-		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
-			if ipnet.IP.To4() != nil && strings.Contains(ipnet.IP.String(), "192.168.0") {
-				fmt.Println(ipnet.IP.String())
-				host = ipnet.IP.String()
-			}
+	req := simplepb.SimpleRequest{
+		Data: "grpc 100",
+	}
+	for i := 0; i < 100; i++ {
+		res, err := s.Route(context.Background(), &req)
+		if err != nil {
+			panic(err)
 		}
+		fmt.Println(res)
 	}
-	opt := &grpcx.ServerOptions{
-		EtcdOpt: &etcdx.Options{
-			Addrs:  []string{"192.168.0.102:2379"},
-			TTL:    30,
-			Scheme: "grpc",
-		},
-		Host:         host,
-		Port:         9413,
-		GWPort:       9414,
-		ServiceName:  "cyg_service1",
-		LogrusLogger: nil,
-	}
-	if err := app.AddGrpcGateway(opt, example_app.NewExampleServer()); err != nil {
+
+	ss, err := dc.SS()
+	if err != nil {
 		panic(err)
 	}
 
-	return app.Run()
+	req1 := &server_streampb.SimpleRequest{Data: "stream server grpc "}
+	stream, err := ss.ListValue(context.Background(), req1)
+	if err != nil {
+		panic(err)
+	}
+	for {
+		//Recv() 方法接收服务端消息，默认每次Recv()最大消息长度为`1024*1024*4`bytes(4M)
+		res, err := stream.Recv()
+		// 判断消息流是否已经结束
+		if err == io.EOF {
+			fmt.Println("end!", err)
+			break
+		}
+		if err != nil {
+			fmt.Errorf("ListStr get stream err: %v", err)
+		}
+		// 打印返回值
+		log.Println(res.StreamValue)
+	}
+
+	return 0
 }

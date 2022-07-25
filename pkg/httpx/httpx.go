@@ -72,11 +72,11 @@ func (c *Client) GET(uri string, handler func(resp *http.Response) error) error 
 	return c.BaseRequest(context.Background(), "GET", uri, nil, handler)
 }
 
-func (c *Client) POST(uri string, data interface{}, handler func(resp *http.Response) error) error {
+func (c *Client) POST(uri string, data any, handler func(resp *http.Response) error) error {
 	return c.BaseRequest(context.Background(), "GET", uri, data, handler)
 }
 
-func (c *Client) BaseRequest(ctx context.Context, method, uri string, data interface{}, handler func(resp *http.Response) error) error {
+func (c *Client) BaseRequest(ctx context.Context, method, uri string, data any, handler func(resp *http.Response) error) error {
 	// new request
 	url := c.host + uri
 	body := io.Reader(nil)
@@ -122,7 +122,7 @@ func (c *Client) BaseRequest(ctx context.Context, method, uri string, data inter
 	return nil
 }
 
-func (c *Client) JsonDecode(resp *http.Response, res interface{}) error {
+func (c *Client) JsonDecode(resp *http.Response, res any) error {
 	return json.NewDecoder(resp.Body).Decode(res)
 }
 

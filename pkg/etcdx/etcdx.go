@@ -2,9 +2,12 @@ package etcdx
 
 import (
 	"errors"
+	"time"
+
+	"github.com/IguoChan/go-project/pkg/util"
+
 	v3 "go.etcd.io/etcd/client/v3"
 	"go.uber.org/zap"
-	"time"
 )
 
 const (
@@ -20,11 +23,11 @@ type ClientV3 struct {
 }
 
 type Options struct {
-	Addrs       []string      // etcd主机地址
-	DialTimeout time.Duration // 连接失败超时时间
-	Username    string
-	Password    string
-	Scheme      string
+	Addrs       []string      `json:"endpoints" mapstructure:"endpoints"` // etcd主机地址
+	Username    string        `json:"username" mapstructure:"username"`
+	Password    string        `json:"password" mapstructure:"password"`
+	DialTimeout time.Duration `json:"-"` // 连接失败超时时间
+	Scheme      string        `json:"-"`
 
 	// logger
 	*zap.Logger
@@ -40,7 +43,7 @@ func NewClient(opt *Options) (*ClientV3, error) {
 
 	c, err := v3.New(v3.Config{
 		Endpoints:   opt.Addrs,
-		DialTimeout: opt.DialTimeout,
+		DialTimeout: util.SetIf0(opt.DialTimeout, 5*time.Second),
 		Username:    opt.Username,
 		Password:    opt.Password,
 		Logger:      opt.Logger,

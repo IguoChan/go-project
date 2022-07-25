@@ -9,27 +9,32 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/sirupsen/logrus"
-
 	"github.com/IguoChan/go-project/pkg/grpcx"
+	"github.com/sirupsen/logrus"
+)
+
+const (
+	ErrServiceDependency = iota + 1
+	ErrGrpcGateway
 )
 
 type app struct {
-	appName string
-	ctx     context.Context
-	cancel  context.CancelFunc
+	serviceName string
+	ctx         context.Context
+	cancel      context.CancelFunc
 
-	grpcServers []grpcx.GrpcServer
+	grpcServer grpcx.GrpcServer
 
 	workers []Worker
 	wmu     sync.Mutex
 }
 
-func New() *app {
+func New(serviceName string) *app {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &app{
-		ctx:    ctx,
-		cancel: cancel,
+		serviceName: serviceName,
+		ctx:         ctx,
+		cancel:      cancel,
 	}
 }
 
@@ -40,7 +45,7 @@ func (a *app) AddWorker(w Worker) {
 	a.workers = append(a.workers, w)
 }
 
-func (a *app) AddGrpcServer(opt *grpcx.ServerOptions, rs []grpcx.PBServerRegister) error {
+func (a *app) SetGrpcServer(opt *grpcx.ServerOptions, rs ...grpcx.PBServerRegister) error {
 	if len(rs) == 0 {
 		a.cancel()
 		return errors.New("no register service")
@@ -49,15 +54,16 @@ func (a *app) AddGrpcServer(opt *grpcx.ServerOptions, rs []grpcx.PBServerRegiste
 	server, err := grpcx.NewServer(opt, rs[0], rs[1:]...)
 	if err != nil {
 		a.cancel()
+		return err
 	}
 
-	a.grpcServers = append(a.grpcServers, server)
+	a.grpcServer = server
 
 	return nil
 }
 
-// AddGrpcGateway Gateway包含了启动GrpcServer，无需再调用 AddGrpcServer
-func (a *app) AddGrpcGateway(opt *grpcx.ServerOptions, rs ...grpcx.PBGatewayRegister) error {
+// SetGrpcGateway Gateway包含了启动GrpcServer，无需再调用 SetGrpcServer
+func (a *app) SetGrpcGateway(opt *grpcx.ServerOptions, rs ...grpcx.PBGatewayRegister) error {
 	if len(rs) == 0 {
 		a.cancel()
 		return errors.New("no register service")
@@ -66,9 +72,10 @@ func (a *app) AddGrpcGateway(opt *grpcx.ServerOptions, rs ...grpcx.PBGatewayRegi
 	server, err := grpcx.NewGateway(opt, rs[0], rs[1:]...)
 	if err != nil {
 		a.cancel()
+		return err
 	}
 
-	a.grpcServers = append(a.grpcServers, server)
+	a.grpcServer = server
 
 	return nil
 }
@@ -87,15 +94,12 @@ func (a *app) Run() int {
 	}
 
 	// server
-	for _, server := range a.grpcServers {
-		s := server
-		go func() {
-			err := s.Serve()
-			if err != nil {
-				a.cancel()
-			}
-		}()
-	}
+	go func() {
+		err := a.grpcServer.Serve()
+		if err != nil {
+			a.cancel()
+		}
+	}()
 
 	// wait
 	interrupt := make(chan os.Signal, 1)
@@ -106,9 +110,7 @@ func (a *app) Run() int {
 			logrus.Info("server exit by ctx cancel, bye!")
 
 			// stop the server
-			for _, server := range a.grpcServers {
-				server.Stop()
-			}
+			a.grpcServer.Stop()
 
 			// stop the worker
 			for _, w := range a.workers {

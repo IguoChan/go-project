@@ -87,7 +87,7 @@ func (d *Discovery) delServerList(k string) {
 
 func (d *Discovery) getServices() []resolver.Address {
 	addrs := make([]resolver.Address, 0, 10)
-	d.serverList.Range(func(k, v interface{}) bool {
+	d.serverList.Range(func(k, v any) bool {
 		addrs = append(addrs, v.(resolver.Address))
 		return true
 	})

@@ -281,7 +281,7 @@ func file_simplepb_simple_proto_rawDescGZIP() []byte {
 }
 
 var file_simplepb_simple_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
-var file_simplepb_simple_proto_goTypes = []interface{}{
+var file_simplepb_simple_proto_goTypes = []any{
 	(*SimpleRequest)(nil),  // 0: simplepb.SimpleRequest
 	(*SimpleResponse)(nil), // 1: simplepb.SimpleResponse
 	(*AAReq)(nil),          // 2: simplepb.AAReq
@@ -305,7 +305,7 @@ func file_simplepb_simple_proto_init() {
 		return
 	}
 	if !protoimpl.UnsafeEnabled {
-		file_simplepb_simple_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
+		file_simplepb_simple_proto_msgTypes[0].Exporter = func(v any, i int) any {
 			switch v := v.(*SimpleRequest); i {
 			case 0:
 				return &v.state
@@ -317,7 +317,7 @@ func file_simplepb_simple_proto_init() {
 				return nil
 			}
 		}
-		file_simplepb_simple_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
+		file_simplepb_simple_proto_msgTypes[1].Exporter = func(v any, i int) any {
 			switch v := v.(*SimpleResponse); i {
 			case 0:
 				return &v.state
@@ -329,7 +329,7 @@ func file_simplepb_simple_proto_init() {
 				return nil
 			}
 		}
-		file_simplepb_simple_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
+		file_simplepb_simple_proto_msgTypes[2].Exporter = func(v any, i int) any {
 			switch v := v.(*AAReq); i {
 			case 0:
 				return &v.state
@@ -341,7 +341,7 @@ func file_simplepb_simple_proto_init() {
 				return nil
 			}
 		}
-		file_simplepb_simple_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
+		file_simplepb_simple_proto_msgTypes[3].Exporter = func(v any, i int) any {
 			switch v := v.(*AAres); i {
 			case 0:
 				return &v.state
