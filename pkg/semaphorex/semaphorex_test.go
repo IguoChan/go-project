@@ -9,7 +9,7 @@ import (
 )
 
 func TestSemaphore(t *testing.T) {
-	nameOpt := SetName("semaphore_test1")
+	nameOpt := SetName("semaphore_test4")
 	rc, err := redisx.NewClient(&redisx.Options{
 		Addrs:       []string{"192.168.0.102:6379"},
 		Password:    "123456",
@@ -23,13 +23,13 @@ func TestSemaphore(t *testing.T) {
 	sema := NewSemaphore(SemaphoreRedis, 5, nameOpt, rcOpt)
 
 	wg := sync.WaitGroup{}
-	for i := 0; i < 100000; i++ {
+	for i := 0; i < 10000; i++ {
 		wg.Add(1)
 		go func(idx int) {
 			defer wg.Done()
 			ok := sema.TryAcquire()
 			if !ok {
-				t.Logf("[%+v] [%d] get sema failed!", time.Now(), idx)
+				//t.Logf("[%+v] [%d] get sema failed!", time.Now(), idx)
 				return
 			}
 			defer sema.Release()

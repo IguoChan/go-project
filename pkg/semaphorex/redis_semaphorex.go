@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/IguoChan/go-project/pkg/cache/redisx"
@@ -25,8 +26,10 @@ type RedisSem struct {
 	ownerKey string // 有序列表
 	timeKey  string // 有序列表，做超时判断
 	waitKey  string // list，用作队列判断
+	clearKey string // 用于清除过期数据的锁键值
 
-	timeout int64 // 单位纳秒
+	timeout  int64         // 单位纳秒
+	interval time.Duration // 清除过期数据最小间隔
 }
 
 func NewRedisSem(n int64, semName string, rc *redisx.Client) *RedisSem {
@@ -38,7 +41,9 @@ func NewRedisSem(n int64, semName string, rc *redisx.Client) *RedisSem {
 		ownerKey: semName + "_owner",
 		timeKey:  semName + "_time",
 		waitKey:  semName + "_wait",
+		clearKey: semName + "_clear",
 		timeout:  600000000000, // 暂定10min
+		interval: 5 * time.Second,
 	}
 }
 
@@ -56,14 +61,16 @@ func (r *RedisSem) Acquire(ctx context.Context) error {
 }
 
 func (r *RedisSem) TryAcquire() bool {
-	//// 首先清除超时信号量
-	//// 1. 清除时间戳 zset 的超时数据
-	//r.rc.ZRemRangeByScore(context.Background(), r.timeKey, "0", strconv.FormatInt(time.Now().UnixNano()-r.timeout, 10))
-	//// 2. 取交集，取最小值存入ownKey（一般而言最小值肯定是cnt），使得ownKey也过滤掉超时信号量
-	//r.rc.ZInterStore(context.Background(), r.ownerKey, &redis.ZStore{
-	//	Keys:      []string{r.timeKey, r.ownerKey},
-	//	Aggregate: "MIN",
-	//})
+	// 首先清除超时信号量
+	if r.tryLock() {
+		// 1. 清除时间戳 zset 的超时数据
+		r.rc.ZRemRangeByScore(context.Background(), r.timeKey, "0", strconv.FormatInt(time.Now().UnixNano()-r.timeout, 10))
+		// 2. 取交集，取最小值存入ownKey（一般而言最小值肯定是cnt），使得ownKey也过滤掉超时信号量
+		r.rc.ZInterStore(context.Background(), r.ownerKey, &redis.ZStore{
+			Keys:      []string{r.timeKey, r.ownerKey},
+			Aggregate: "MIN",
+		})
+	}
 	//
 	//// 设置
 	//intCmd := r.rc.ZAdd(context.Background(), r.timeKey, &redis.Z{
@@ -98,10 +105,11 @@ func (r *RedisSem) TryAcquire() bool {
 	//return true
 
 	keys := []string{r.timeKey, r.ownerKey, r.waitKey, r.incrKey}
-	values := []interface{}{r.identifyId(), time.Now().UnixNano(), time.Now().UnixNano() - r.timeout, r.permit}
+	values := []interface{}{r.identifyId(), time.Now().UnixNano(), r.permit}
 	res, err := acquireScript.Run(context.Background(), r.rc, keys, values...).Int()
 	if err != nil || res == 0 {
-		r.Release()
+		r.rc.ZRem(context.Background(), r.timeKey, r.identifyId())
+		r.rc.ZRem(context.Background(), r.ownerKey, r.identifyId())
 		return false
 	}
 
@@ -118,6 +126,14 @@ func (r *RedisSem) Release() {
 	}
 }
 
+func (r *RedisSem) tryLock() bool {
+	booCmd := r.rc.SetNX(context.Background(), r.clearKey, "true", r.interval)
+	if booCmd.Err() != nil || !booCmd.Val() {
+		return false
+	}
+	return true
+}
+
 func (r *RedisSem) identifyId() string {
 	hostname, _ := os.Hostname()
 	// 使用 hostname-pid-goroutineId 作为唯一标识
@@ -125,14 +141,12 @@ func (r *RedisSem) identifyId() string {
 }
 
 var acquireScript = redis.NewScript(`
-	redis.call("ZREMRANGEBYSCORE", KEYS[1], 0, ARGV[3])
-	redis.call("ZINTERSTORE", KEYS[2], 2, KEYS[1], KEYS[2], "AGGREGATE", "MIN")
 	local cnt = redis.call("INCR", KEYS[4])
 	redis.call("ZADD", KEYS[1], ARGV[2], ARGV[1])
 	redis.call("ZADD", KEYS[2], cnt, ARGV[1])
 	print(ARGV[4])
 	local res = redis.call("ZRANK", KEYS[2], ARGV[1])
-	if res >= tonumber(ARGV[4]) then
+	if res >= tonumber(ARGV[3]) then
 		return 0
 	else
 		return 1
