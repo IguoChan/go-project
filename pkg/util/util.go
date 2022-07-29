@@ -8,14 +8,14 @@ import (
 	"time"
 )
 
-func SetIfNil[T int | int32 | int64 | string | float32 | float64](value *T, set T) T {
+func SetIfNil[T int | int32 | int64 | uint | uint8 | uint16 | uint32 | uint64 | float32 | float64 | string](value *T, set T) T {
 	if value != nil {
 		return *value
 	}
 	return set
 }
 
-func SetIf0[T int | int32 | int64 | float32 | float64 | time.Duration](value T, set T) T {
+func SetIf0[T int | int32 | int64 | uint | uint8 | uint16 | uint32 | uint64 | float32 | float64 | time.Duration](value T, set T) T {
 	if value != T(0) {
 		return value
 	}
@@ -27,6 +27,20 @@ func SetIfEmpty(value string, set string) string {
 		return value
 	}
 	return set
+}
+
+func GetMax[T int | int32 | int64 | uint | uint8 | uint16 | uint32 | uint64 | float32 | float64 | time.Duration](v1 T, v2 T) T {
+	if v1 > v2 {
+		return v1
+	}
+	return v2
+}
+
+func GetMin[T int | int32 | int64 | uint | uint8 | uint16 | uint32 | uint64 | float32 | float64 | time.Duration](v1 T, v2 T) T {
+	if v1 < v2 {
+		return v1
+	}
+	return v2
 }
 
 // GoroutineId 获取当前协程id

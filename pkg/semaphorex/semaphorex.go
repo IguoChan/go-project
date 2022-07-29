@@ -31,7 +31,7 @@ func NewSemaphore(t SemaphoreType, n int64, opts ...Option) Semaphore {
 		for _, apply := range opts {
 			apply(defaultOpts)
 		}
-		return NewRedisSem(n, defaultOpts.name, defaultOpts.rc)
+		return NewRedisSem(n, defaultOpts.name, defaultOpts.rc, defaultOpts)
 	default:
 		return NewProcessSem(n)
 	}

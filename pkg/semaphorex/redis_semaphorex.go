@@ -28,22 +28,24 @@ type RedisSem struct {
 	waitKey  string // list，用作队列判断
 	clearKey string // 用于清除过期数据的锁键值
 
-	timeout  int64         // 单位纳秒
-	interval time.Duration // 清除过期数据最小间隔
+	timeout   int64         // 单位纳秒
+	interval  time.Duration // 清除过期数据最小间隔
+	releaseCh chan struct{}
 }
 
-func NewRedisSem(n int64, semName string, rc *redisx.Client) *RedisSem {
+func NewRedisSem(n int64, semName string, rc *redisx.Client, opt *setOptions) *RedisSem {
 	return &RedisSem{
-		permit:   n,
-		rc:       rc,
-		name:     semName,
-		incrKey:  semName + "_incr",
-		ownerKey: semName + "_owner",
-		timeKey:  semName + "_time",
-		waitKey:  semName + "_wait",
-		clearKey: semName + "_clear",
-		timeout:  600000000000, // 暂定10min
-		interval: 5 * time.Second,
+		permit:    n,
+		rc:        rc,
+		name:      semName,
+		incrKey:   semName + "_incr",
+		ownerKey:  semName + "_owner",
+		timeKey:   semName + "_time",
+		waitKey:   semName + "_wait",
+		clearKey:  semName + "_clear",
+		timeout:   util.SetIf0(opt.timeout.Nanoseconds(), 120000000000), // 默认2min
+		interval:  util.GetMin(opt.timeout/4, 5*time.Second),            // 取超时时间的1/4或者5s的最小值
+		releaseCh: make(chan struct{}),
 	}
 }
 
@@ -115,6 +117,8 @@ func (r *RedisSem) TryAcquire() bool {
 
 	return true
 }
+
+func (r *RedisSem) extension() {}
 
 func (r *RedisSem) Release() {
 	keys := []string{r.timeKey, r.ownerKey, r.waitKey}

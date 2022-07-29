@@ -1,13 +1,16 @@
 package semaphorex
 
 import (
+	"time"
+
 	"github.com/IguoChan/go-project/pkg/cache/redisx"
 	"github.com/go-redis/redis/v8"
 )
 
 type setOptions struct {
-	name string
-	rc   *redisx.Client
+	name    string
+	rc      *redisx.Client
+	timeout time.Duration
 }
 
 type Option func(*setOptions)
@@ -38,5 +41,11 @@ func SetRedisClient(rc *redisx.Client) Option {
 			return
 		}
 		options.rc = rc
+	}
+}
+
+func SetTimeout(timeout time.Duration) Option {
+	return func(options *setOptions) {
+		options.timeout = timeout
 	}
 }
