@@ -45,7 +45,7 @@ func NewRedisSem(n int64, semName string, rc *redisx.Client, opt *setOptions) *R
 		clearKey:  semName + "_clear",
 		timeout:   util.SetIf0(opt.timeout.Nanoseconds(), 120000000000), // 默认2min
 		interval:  util.GetMin(opt.timeout/4, 5*time.Second),            // 取超时时间的1/4或者5s的最小值
-		releaseCh: make(chan struct{}),
+		releaseCh: make(chan struct{}, 1),                               // 大小设置为1，避免写入的时候extension携程已经死了导致阻塞
 	}
 }
 
@@ -115,10 +115,32 @@ func (r *RedisSem) TryAcquire() bool {
 		return false
 	}
 
+	go r.extension(r.identifyId())
+
 	return true
 }
 
-func (r *RedisSem) extension() {}
+// 用于信号量的续约
+func (r *RedisSem) extension(identifyId string) {
+	tick := time.NewTicker(r.interval)
+	defer tick.Stop()
+
+	for {
+		select {
+		case <-tick.C:
+			intCmd := r.rc.ZAdd(context.Background(), r.timeKey, &redis.Z{
+				Score:  float64(time.Now().UnixNano()),
+				Member: identifyId,
+			})
+			if intCmd.Err() != nil {
+				logrus.Errorf("%s extension the redis semaphore failed: %+v", identifyId, intCmd.Err())
+			}
+		case <-r.releaseCh:
+			logrus.Infof("%s release the semaphore!", identifyId)
+			return
+		}
+	}
+}
 
 func (r *RedisSem) Release() {
 	keys := []string{r.timeKey, r.ownerKey, r.waitKey}
@@ -128,6 +150,7 @@ func (r *RedisSem) Release() {
 		r.rc.ZRem(context.Background(), r.timeKey, r.identifyId())
 		r.rc.ZRem(context.Background(), r.ownerKey, r.identifyId())
 	}
+	r.releaseCh <- struct{}{}
 }
 
 func (r *RedisSem) tryLock() bool {

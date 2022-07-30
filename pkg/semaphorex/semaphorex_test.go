@@ -20,10 +20,11 @@ func TestSemaphore(t *testing.T) {
 		t.Fatal(err)
 	}
 	rcOpt := SetRedisClient(rc)
-	sema := NewSemaphore(SemaphoreRedis, 5, nameOpt, rcOpt)
+	timeoutOpt := SetTimeout(10 * time.Second)
+	sema := NewSemaphore(SemaphoreRedis, 5, nameOpt, rcOpt, timeoutOpt)
 
 	wg := sync.WaitGroup{}
-	for i := 0; i < 10000; i++ {
+	for i := 0; i < 1; i++ {
 		wg.Add(1)
 		go func(idx int) {
 			defer wg.Done()
@@ -37,8 +38,9 @@ func TestSemaphore(t *testing.T) {
 			defer func() {
 				t.Logf("[%+v] [%d] release sema!", time.Now(), idx)
 			}()
-			time.Sleep(3 * time.Second)
+			time.Sleep(15 * time.Second)
 		}(i)
 	}
 	wg.Wait()
+	time.Sleep(time.Second)
 }
