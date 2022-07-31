@@ -1,4 +1,4 @@
-// 参考：https://github.com/rfyiamcool/go_redis_semaphore/blob/433ae39b137d5b15a0f74a5672ffe940b31e3b6f/go_redis_semaphore.go#L114
+// 参考：https://www.skypyb.com/2020/06/jishu/1538/
 
 package semaphorex
 
@@ -11,10 +11,8 @@ import (
 
 	"github.com/IguoChan/go-project/pkg/cache/redisx"
 	"github.com/IguoChan/go-project/pkg/util"
-
-	"github.com/sirupsen/logrus"
-
 	"github.com/go-redis/redis/v8"
+	"github.com/sirupsen/logrus"
 )
 
 type RedisSem struct {
@@ -31,6 +29,8 @@ type RedisSem struct {
 	timeout   int64         // 单位纳秒
 	interval  time.Duration // 清除过期数据最小间隔
 	releaseCh chan struct{}
+
+	opt *setOptions
 }
 
 func NewRedisSem(n int64, semName string, rc *redisx.Client, opt *setOptions) *RedisSem {
@@ -46,6 +46,7 @@ func NewRedisSem(n int64, semName string, rc *redisx.Client, opt *setOptions) *R
 		timeout:   util.SetIf0(opt.timeout.Nanoseconds(), 120000000000), // 默认2min
 		interval:  util.GetMin(opt.timeout/4, 5*time.Second),            // 取超时时间的1/4或者5s的最小值
 		releaseCh: make(chan struct{}, 1),                               // 大小设置为1，避免写入的时候extension携程已经死了导致阻塞
+		opt:       opt,
 	}
 }
 
@@ -54,7 +55,7 @@ func (r *RedisSem) Acquire(ctx context.Context) error {
 	if !ok {
 		cmd := r.rc.BRPop(ctx, 0, r.waitKey)
 		if cmd.Err() != nil {
-			logrus.Errorf("RedisSem Acquire BRPop failed: %+v", cmd.Err())
+			logrus.Errorf("[%s] RedisSem Acquire semephore [%s] BRPop failed: %+v", r.identifyId(), r.name, cmd.Err())
 			return ErrGetSem
 		}
 		return r.Acquire(ctx)
@@ -106,7 +107,7 @@ func (r *RedisSem) TryAcquire() bool {
 	//
 	//return true
 
-	keys := []string{r.timeKey, r.ownerKey, r.waitKey, r.incrKey}
+	keys := []string{r.timeKey, r.ownerKey, r.incrKey}
 	values := []interface{}{r.identifyId(), time.Now().UnixNano(), r.permit}
 	res, err := acquireScript.Run(context.Background(), r.rc, keys, values...).Int()
 	if err != nil || res == 0 {
@@ -122,7 +123,8 @@ func (r *RedisSem) TryAcquire() bool {
 
 // 用于信号量的续约
 func (r *RedisSem) extension(identifyId string) {
-	tick := time.NewTicker(r.interval)
+	interval := util.SetIf0(r.opt.timeout, 2*time.Minute) / 2
+	tick := time.NewTicker(interval)
 	defer tick.Stop()
 
 	for {
@@ -133,23 +135,29 @@ func (r *RedisSem) extension(identifyId string) {
 				Member: identifyId,
 			})
 			if intCmd.Err() != nil {
-				logrus.Errorf("%s extension the redis semaphore failed: %+v", identifyId, intCmd.Err())
+				logrus.Errorf("[%s] extension the redis semaphore[%s] failed: %+v", identifyId, r.name, intCmd.Err())
 			}
 		case <-r.releaseCh:
-			logrus.Infof("%s release the semaphore!", identifyId)
+			// 高并发时，可能该信号量在release之后还进行了续约，所以我们删除掉这次信号量，以保证安全
+			r.rc.ZRem(context.Background(), r.timeKey, identifyId)
+			r.rc.ZRem(context.Background(), r.ownerKey, identifyId)
 			return
 		}
 	}
 }
 
 func (r *RedisSem) Release() {
-	keys := []string{r.timeKey, r.ownerKey, r.waitKey}
-	values := []interface{}{r.identifyId()}
-	_, err := releaseScript.Run(context.Background(), r.rc, keys, values...).Int()
-	if err != nil {
-		r.rc.ZRem(context.Background(), r.timeKey, r.identifyId())
-		r.rc.ZRem(context.Background(), r.ownerKey, r.identifyId())
-	}
+	//keys := []string{r.timeKey, r.ownerKey, r.waitKey}
+	//values := []interface{}{r.identifyId()}
+	//_, err := releaseScript.Run(context.Background(), r.rc, keys, values...).Int()
+	//if err != nil {
+	//	r.rc.ZRem(context.Background(), r.timeKey, r.identifyId())
+	//	r.rc.ZRem(context.Background(), r.ownerKey, r.identifyId())
+	//}
+	r.rc.ZRem(context.Background(), r.timeKey, r.identifyId())
+	r.rc.ZRem(context.Background(), r.ownerKey, r.identifyId())
+	r.rc.RPush(context.Background(), r.waitKey, r.identifyId())
+	r.rc.Expire(context.Background(), r.waitKey, 5*time.Second)
 	r.releaseCh <- struct{}{}
 }
 
@@ -168,7 +176,7 @@ func (r *RedisSem) identifyId() string {
 }
 
 var acquireScript = redis.NewScript(`
-	local cnt = redis.call("INCR", KEYS[4])
+	local cnt = redis.call("INCR", KEYS[3])
 	redis.call("ZADD", KEYS[1], ARGV[2], ARGV[1])
 	redis.call("ZADD", KEYS[2], cnt, ARGV[1])
 	print(ARGV[4])
