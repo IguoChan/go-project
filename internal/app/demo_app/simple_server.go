@@ -3,6 +3,7 @@ package demo_app
 import (
 	"context"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/IguoChan/go-project/api/genproto/demo_app/simplepb"
@@ -33,7 +34,7 @@ func (s SimpleServer) Route(ctx context.Context, request *simplepb.SimpleRequest
 	hn, _ := os.Hostname()
 	res := &simplepb.SimpleResponse{
 		Code:  200,
-		Value: "DE " + hn + " " + request.Data + " " + time.Now().String(),
+		Value: strconv.Itoa(os.Getpid()) + " DE " + hn + " " + request.Data + " " + time.Now().String(),
 	}
 	return res, nil
 }

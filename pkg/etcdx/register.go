@@ -44,6 +44,7 @@ func (r *Register) Registry(ctx context.Context, serviceName, addr string) error
 		return err
 	}
 
+	// 注意此处的ctx不可以使用传入的ctx，因为其将作为后台任务一直运行
 	keepAlive, err := r.KeepAlive(context.Background(), resp.ID)
 	if err != nil {
 		return err
@@ -75,13 +76,4 @@ func (r *Register) Revoke() error {
 		return err
 	}
 	return nil
-}
-
-func (r *Register) Close() error {
-	err := r.Revoke()
-	if err != nil {
-		return err
-	}
-
-	return r.ClientV3.Close()
 }

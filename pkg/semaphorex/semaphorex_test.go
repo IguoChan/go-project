@@ -2,11 +2,12 @@ package semaphorex
 
 import (
 	"fmt"
-	"github.com/IguoChan/go-project/pkg/util"
 	"os"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/IguoChan/go-project/pkg/util"
 
 	"github.com/IguoChan/go-project/pkg/cache/redisx"
 )
@@ -14,7 +15,7 @@ import (
 func TestSemaphore(t *testing.T) {
 	nameOpt := SetName("semaphore_test1")
 	rc, err := redisx.NewClient(&redisx.Options{
-		Addrs:       []string{"192.168.0.102:6379"},
+		Addrs:       []string{"192.168.0.98:6379"},
 		Password:    "123456",
 		DialTimeout: 10 * time.Second,
 		ReadTimeout: 600 * time.Second,

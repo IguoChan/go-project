@@ -5,9 +5,10 @@ import (
 	"errors"
 	"time"
 
+	"go.uber.org/zap"
+
 	"github.com/IguoChan/go-project/pkg/logx"
 	"github.com/go-redis/redis/v8"
-	"github.com/sirupsen/logrus"
 )
 
 type Client struct {
@@ -26,7 +27,7 @@ type Options struct {
 	WriteTimeout time.Duration
 
 	// logger
-	LogrusLogger *logrus.Logger
+	LogrusLogger *zap.Logger
 }
 
 func NewClient(opt *Options) (*Client, error) {

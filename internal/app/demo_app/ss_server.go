@@ -6,14 +6,13 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/IguoChan/go-project/pkg/grpcx"
-
 	"github.com/IguoChan/go-project/api/genproto/demo_app/server_streampb"
+	"github.com/IguoChan/go-project/pkg/rpcx"
 	"google.golang.org/grpc"
 )
 
 type ServerStream struct {
-	grpcx.EmptyGateway
+	rpcx.EmptyGateway
 	server_streampb.UnimplementedStreamServerServer
 }
 

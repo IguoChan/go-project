@@ -15,7 +15,7 @@ import (
 	"github.com/IguoChan/go-project/internal/app/demo_app"
 
 	"github.com/IguoChan/go-project/pkg/etcdx"
-	"github.com/IguoChan/go-project/pkg/grpcx"
+	"github.com/IguoChan/go-project/pkg/rpcx"
 )
 
 func main() {
@@ -23,10 +23,10 @@ func main() {
 }
 
 func Run() int {
-	opts := make(map[string]*grpcx.ClientOptions)
-	opts["demo"] = &grpcx.ClientOptions{
+	opts := make(map[string]*rpcx.ClientOptions)
+	opts["demo"] = &rpcx.ClientOptions{
 		EtcdOpt: &etcdx.Options{
-			Addrs:       []string{"192.168.0.102:2379"},
+			Addrs:       []string{"192.168.0.98:2379"},
 			DialTimeout: 5 * time.Second,
 			TTL:         30,
 		},

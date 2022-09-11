@@ -49,6 +49,7 @@ func (d *Discovery) Build(target resolver.Target, cc resolver.ClientConn, opts r
 	return d, nil
 }
 
+//Scheme return schema
 func (d *Discovery) Scheme() string {
 	return d.ClientV3.Scheme
 }
@@ -56,7 +57,6 @@ func (d *Discovery) Scheme() string {
 // ResolveNow 监视目标更新
 func (d *Discovery) ResolveNow(rn resolver.ResolveNowOptions) {}
 
-//Scheme return schema
 func (d *Discovery) Close() {
 	_ = d.ClientV3.Close()
 }

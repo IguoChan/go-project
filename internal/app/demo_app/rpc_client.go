@@ -7,11 +7,11 @@ import (
 
 	"github.com/IguoChan/go-project/api/genproto/demo_app/simplepb"
 
-	"github.com/IguoChan/go-project/pkg/grpcx"
+	"github.com/IguoChan/go-project/pkg/rpcx"
 )
 
 type RpcClient struct {
-	c *grpcx.RpcClient
+	c *rpcx.RpcClient
 }
 
 var (
@@ -19,10 +19,10 @@ var (
 	once      sync.Once
 )
 
-func NewRpcClient(opts map[string]*grpcx.ClientOptions) *RpcClient {
+func NewRpcClient(opts map[string]*rpcx.ClientOptions) *RpcClient {
 	once.Do(func() {
 		rpcClient = &RpcClient{
-			c: grpcx.NewRpcClient(opts),
+			c: rpcx.NewRpcClient(opts),
 		}
 	})
 	return rpcClient

@@ -1,4 +1,4 @@
-package grpcx
+package rpcx
 
 import (
 	"context"
@@ -131,6 +131,8 @@ func newGrpc() (*grpc.Server, error) {
 	ssi := make([]grpc.StreamServerInterceptor, 0, 2)
 	ssi = append(ssi, grpc_recovery.StreamServerInterceptor(), streamServerInterceptor())
 	opts = append(opts, grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(ssi...)))
+
+	opts = append(opts)
 
 	// 新建grpc服务实例
 	server := grpc.NewServer(opts...)

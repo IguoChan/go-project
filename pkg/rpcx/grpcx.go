@@ -1,4 +1,4 @@
-package grpcx
+package rpcx
 
 type GrpcServer interface {
 	Serve() error

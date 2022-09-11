@@ -9,7 +9,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/IguoChan/go-project/pkg/grpcx"
+	"github.com/IguoChan/go-project/pkg/rpcx"
 	"github.com/sirupsen/logrus"
 )
 
@@ -23,7 +23,7 @@ type app struct {
 	ctx         context.Context
 	cancel      context.CancelFunc
 
-	grpcServer grpcx.GrpcServer
+	grpcServer rpcx.GrpcServer
 
 	workers []Worker
 	wmu     sync.Mutex
@@ -45,13 +45,13 @@ func (a *app) AddWorker(w Worker) {
 	a.workers = append(a.workers, w)
 }
 
-func (a *app) SetGrpcServer(opt *grpcx.ServerOptions, rs ...grpcx.PBServerRegister) error {
+func (a *app) SetGrpcServer(opt *rpcx.ServerOptions, rs ...rpcx.PBServerRegister) error {
 	if len(rs) == 0 {
 		a.cancel()
 		return errors.New("no register service")
 	}
 
-	server, err := grpcx.NewServer(opt, rs[0], rs[1:]...)
+	server, err := rpcx.NewServer(opt, rs[0], rs[1:]...)
 	if err != nil {
 		a.cancel()
 		return err
@@ -63,13 +63,13 @@ func (a *app) SetGrpcServer(opt *grpcx.ServerOptions, rs ...grpcx.PBServerRegist
 }
 
 // SetGrpcGateway Gateway包含了启动GrpcServer，无需再调用 SetGrpcServer
-func (a *app) SetGrpcGateway(opt *grpcx.ServerOptions, rs ...grpcx.PBGatewayRegister) error {
+func (a *app) SetGrpcGateway(opt *rpcx.ServerOptions, rs ...rpcx.PBGatewayRegister) error {
 	if len(rs) == 0 {
 		a.cancel()
 		return errors.New("no register service")
 	}
 
-	server, err := grpcx.NewGateway(opt, rs[0], rs[1:]...)
+	server, err := rpcx.NewGateway(opt, rs[0], rs[1:]...)
 	if err != nil {
 		a.cancel()
 		return err
