@@ -7,12 +7,13 @@
 package examplepb
 
 import (
+	reflect "reflect"
+	sync "sync"
+
 	simplepb "github.com/IguoChan/go-project/api/genproto/demo_app/simplepb"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	reflect "reflect"
-	sync "sync"
 )
 
 const (
@@ -165,7 +166,7 @@ func file_examplepb_example_proto_rawDescGZIP() []byte {
 }
 
 var file_examplepb_example_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
-var file_examplepb_example_proto_goTypes = []any{
+var file_examplepb_example_proto_goTypes = []interface{}{
 	(*ExReq)(nil),                  // 0: examplepb.ExReq
 	(*ExResp)(nil),                 // 1: examplepb.ExResp
 	(*simplepb.SimpleRequest)(nil), // 2: simplepb.SimpleRequest
@@ -187,7 +188,7 @@ func file_examplepb_example_proto_init() {
 		return
 	}
 	if !protoimpl.UnsafeEnabled {
-		file_examplepb_example_proto_msgTypes[0].Exporter = func(v any, i int) any {
+		file_examplepb_example_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ExReq); i {
 			case 0:
 				return &v.state
@@ -199,7 +200,7 @@ func file_examplepb_example_proto_init() {
 				return nil
 			}
 		}
-		file_examplepb_example_proto_msgTypes[1].Exporter = func(v any, i int) any {
+		file_examplepb_example_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ExResp); i {
 			case 0:
 				return &v.state

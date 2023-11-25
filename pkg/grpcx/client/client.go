@@ -2,7 +2,10 @@ package client
 
 import (
 	"context"
+	"fmt"
 	"time"
+
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 
 	"github.com/IguoChan/go-project/pkg/grpcx/resolver"
 	"google.golang.org/grpc"
@@ -20,6 +23,7 @@ type Client struct {
 }
 
 func NewClient(cfg *Config, opts ...Option) (*Client, error) {
+	//balancer.NewVersionBuilder(&balancer.Options{})
 	// options
 	dsOpts := defaultOptions()
 	for _, apply := range opts {
@@ -27,15 +31,31 @@ func NewClient(cfg *Config, opts ...Option) (*Client, error) {
 	}
 	d := dsOpts.discovery
 	if d == nil {
-		d = resolver.NewEmptyResolver(cfg.target)
+		d = resolver.NewEmbedResolver(resolver.SchemePassThrough, cfg.target)
 	}
 
-	// register resolver
-	d.Register()
+	//policy := `{
+	//	"loadBalancingConfig": [ { "round_robin": {} } ],
+	//	"methodConfig": [{
+	//	  "retryPolicy": {
+	//		  "MaxAttempts": 4,
+	//		  "InitialBackoff": ".01s",
+	//		  "MaxBackoff": ".01s",
+	//		  "BackoffMultiplier": 1.0,
+	//		  "RetryableStatusCodes": [ "UNAVAILABLE" ]
+	//	  }
+	//	}]}`
 
 	// dial
 	ctx, _ := context.WithTimeout(context.Background(), 500*time.Second)
-	cc, err := grpc.DialContext(ctx, d.Target(), grpc.WithInsecure(), grpc.WithBlock())
+	cc, err := grpc.DialContext(ctx, d.Target(),
+		grpc.WithResolvers(d),
+		grpc.WithInsecure(),
+		grpc.WithBlock(),
+		grpc.WithDefaultServiceConfig(fmt.Sprintf(`{"LoadBalancingPolicy": "%s"}`, "weight")),
+		grpc.WithUnaryInterceptor(grpc_middleware.ChainUnaryClient(dsOpts.ucis...)),
+		grpc.WithStreamInterceptor(grpc_middleware.ChainStreamClient(dsOpts.scis...)),
+	)
 	if err != nil {
 		return nil, err
 	}

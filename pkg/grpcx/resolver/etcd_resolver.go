@@ -4,8 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
+
+	"github.com/IguoChan/go-project/pkg/grpcx/balancer"
 
 	"github.com/IguoChan/go-project/pkg/etcdx"
 	"github.com/IguoChan/go-project/pkg/util"
@@ -28,9 +32,9 @@ type EtcdResolver struct {
 	cancel     context.CancelFunc
 
 	// register
-	key, val      string
-	leaseID       v3.LeaseID
-	keepAliveChan <-chan *v3.LeaseKeepAliveResponse
+	prefix, key, val string
+	leaseID          v3.LeaseID
+	keepAliveChan    <-chan *v3.LeaseKeepAliveResponse
 
 	scheme      string
 	serviceName string
@@ -69,8 +73,8 @@ func (e *EtcdResolver) Build(target resolver.Target, cc resolver.ClientConn, opt
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	e.cancel = cancel
-	prefix := "/" + target.URL.Scheme + target.URL.Path
-	resp, err := e.Get(ctx, prefix, v3.WithPrefix())
+	e.prefix = "/" + target.URL.Scheme + target.URL.Path + "/"
+	resp, err := e.Get(ctx, e.prefix, v3.WithPrefix())
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +84,7 @@ func (e *EtcdResolver) Build(target resolver.Target, cc resolver.ClientConn, opt
 	}
 	_ = e.cc.UpdateState(resolver.State{Addresses: e.getServices()})
 
-	go e.watch(prefix)
+	go e.watch(e.prefix)
 
 	return e, nil
 }
@@ -111,7 +115,13 @@ func (e *EtcdResolver) watch(prefix string) {
 }
 
 func (e *EtcdResolver) setServerList(k, v string) {
-	e.serverList.Store(k, resolver.Address{Addr: v})
+	addr := resolver.Address{Addr: strings.TrimPrefix(k, e.prefix)}
+	weight, err := strconv.Atoi(v)
+	if err != nil {
+		weight = balancer.MinWeight
+	}
+	addr = balancer.SetAddrInfo(addr, balancer.WeightAddrInfo{Weight: weight})
+	e.serverList.Store(k, addr)
 	_ = e.cc.UpdateState(resolver.State{Addresses: e.getServices()})
 }
 
@@ -131,7 +141,7 @@ func (e *EtcdResolver) getServices() []resolver.Address {
 
 func (e *EtcdResolver) Registry(ctx context.Context, addr string) error {
 	e.key = "/" + e.scheme + "/" + e.serviceName + "/" + addr
-	e.val = addr
+	e.val = strconv.Itoa(14)
 
 	// 设置租约
 	resp, err := e.Grant(ctx, e.TTL)

@@ -6,12 +6,10 @@ import (
 	"net"
 	"time"
 
-	"go.uber.org/zap"
-
-	"github.com/sirupsen/logrus"
-
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
+	"github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )
 
@@ -62,19 +60,17 @@ func NewServer(cfg *Config, rs []PBServerRegister, opts ...Option) (*Server, err
 }
 
 func (s *Server) Serve() error {
-	defer s.s.Stop()
-
 	// 监听本地端口
 	listen, err := net.Listen("tcp", fmt.Sprintf(":%d", s.cfg.Port))
 	if err != nil {
 		logrus.Errorf("Net lister err: %v.", err)
 		return err
 	}
-	s.Infof("grpc start listening...:%d", s.cfg.Port)
+	s.Infof("grpc start listening...: %d", s.cfg.Port)
 
 	// 用服务器Serve() 方法以及端口信息区实现阻塞等待，直到进程被杀死或者Stop() 被调用
 	if err := s.s.Serve(listen); err != nil {
-		s.Errorf("grpc serve err: %v.", err)
+		s.Errorf("grpc serve err: %v", err)
 		return err
 	}
 
@@ -82,7 +78,6 @@ func (s *Server) Serve() error {
 }
 
 func newGrpc(dsOpts *options) (*grpc.Server, error) {
-
 	// logger
 	if dsOpts.logger != nil {
 		grpc_zap.ReplaceGrpcLoggerV2(dsOpts.logger)

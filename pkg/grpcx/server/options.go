@@ -5,6 +5,7 @@ import (
 	"github.com/IguoChan/go-project/pkg/grpcx/resolver"
 	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
+	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )
@@ -23,7 +24,7 @@ func defaultOptions() *options {
 	logger, _ := zap.NewDevelopment()
 	return &options{
 		logger:   logger,
-		register: resolver.NewEmptyResolver(""),
+		register: resolver.NewEmbedResolver(resolver.SchemePassThrough, ""),
 	}
 }
 
@@ -52,5 +53,15 @@ func SetEtcdRegister(serviceName string, etcdOpts *etcdx.Options, resolverOpts .
 func WithEtcdRegister(r *resolver.EtcdResolver) Option {
 	return func(opts *options) {
 		opts.register = r
+	}
+}
+
+func WithPrometheus(enableHandlingTimeHistogram bool) Option {
+	return func(opts *options) {
+		if enableHandlingTimeHistogram {
+			grpc_prometheus.EnableHandlingTimeHistogram()
+		}
+		opts.usis = append(opts.usis, grpc_prometheus.UnaryServerInterceptor)
+		opts.ssis = append(opts.ssis, grpc_prometheus.StreamServerInterceptor)
 	}
 }

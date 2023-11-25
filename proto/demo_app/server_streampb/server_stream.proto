@@ -4,7 +4,7 @@ option go_package = "github.com/IguoChan/go-project/api/genproto/demo_app/server
 
 package server_streampb;
 
-import "google/api/annotations.proto";
+//import "google/api/annotations.proto";
 
 // 定义发送请求信息
 message SimpleRequest{

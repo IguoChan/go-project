@@ -48,7 +48,8 @@ func (e *EndpointsResolver) Target() string {
 
 func (e *EndpointsResolver) Build(target resolver.Target, cc resolver.ClientConn, opts resolver.BuildOptions) (resolver.Resolver, error) {
 	e.cc = cc
-	_ = e.cc.UpdateState(resolver.State{Addresses: e.getServices()})
+	addrs := e.getServices()
+	_ = e.cc.UpdateState(resolver.State{Addresses: addrs})
 	return e, nil
 }
 

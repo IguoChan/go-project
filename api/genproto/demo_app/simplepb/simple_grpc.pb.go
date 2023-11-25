@@ -70,7 +70,7 @@ func RegisterSimpleServer(s grpc.ServiceRegistrar, srv SimpleServer) {
 	s.RegisterService(&Simple_ServiceDesc, srv)
 }
 
-func _Simple_Route_Handler(srv any, ctx context.Context, dec func(any) error, interceptor grpc.UnaryServerInterceptor) (any, error) {
+func _Simple_Route_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(SimpleRequest)
 	if err := dec(in); err != nil {
 		return nil, err
@@ -82,7 +82,7 @@ func _Simple_Route_Handler(srv any, ctx context.Context, dec func(any) error, in
 		Server:     srv,
 		FullMethod: "/simplepb.Simple/Route",
 	}
-	handler := func(ctx context.Context, req any) (any, error) {
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(SimpleServer).Route(ctx, req.(*SimpleRequest))
 	}
 	return interceptor(ctx, in, info, handler)
@@ -156,7 +156,7 @@ func RegisterAAServer(s grpc.ServiceRegistrar, srv AAServer) {
 	s.RegisterService(&AA_ServiceDesc, srv)
 }
 
-func _AA_Get_Handler(srv any, ctx context.Context, dec func(any) error, interceptor grpc.UnaryServerInterceptor) (any, error) {
+func _AA_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(AAReq)
 	if err := dec(in); err != nil {
 		return nil, err
@@ -168,7 +168,7 @@ func _AA_Get_Handler(srv any, ctx context.Context, dec func(any) error, intercep
 		Server:     srv,
 		FullMethod: "/simplepb.AA/Get",
 	}
-	handler := func(ctx context.Context, req any) (any, error) {
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AAServer).Get(ctx, req.(*AAReq))
 	}
 	return interceptor(ctx, in, info, handler)

@@ -2,8 +2,12 @@ package etcdx
 
 import (
 	"context"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
+
+	"github.com/IguoChan/go-project/pkg/grpcx/balancer"
 
 	"github.com/IguoChan/go-project/pkg/util"
 	"go.etcd.io/etcd/api/v3/mvccpb"
@@ -76,7 +80,14 @@ func (d *Discovery) watch(prefix string) {
 }
 
 func (d *Discovery) setServerList(k, v string) {
-	d.serverList.Store(k, resolver.Address{Addr: v})
+	addrs := strings.Split(v, "|")
+	addr := resolver.Address{Addr: addrs[0]}
+	weight, err := strconv.Atoi(addrs[1])
+	if err != nil {
+		weight = 1
+	}
+	addr = balancer.SetAddrInfo(addr, balancer.WeightAddrInfo{Weight: weight})
+	d.serverList.Store(k, addr)
 	_ = d.conn.UpdateState(resolver.State{Addresses: d.getServices()})
 }
 

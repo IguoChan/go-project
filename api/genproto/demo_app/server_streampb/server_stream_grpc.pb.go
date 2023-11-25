@@ -107,7 +107,7 @@ func RegisterStreamServerServer(s grpc.ServiceRegistrar, srv StreamServerServer)
 	s.RegisterService(&StreamServer_ServiceDesc, srv)
 }
 
-func _StreamServer_Route_Handler(srv any, ctx context.Context, dec func(any) error, interceptor grpc.UnaryServerInterceptor) (any, error) {
+func _StreamServer_Route_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(SimpleRequest)
 	if err := dec(in); err != nil {
 		return nil, err
@@ -119,13 +119,13 @@ func _StreamServer_Route_Handler(srv any, ctx context.Context, dec func(any) err
 		Server:     srv,
 		FullMethod: "/server_streampb.StreamServer/Route",
 	}
-	handler := func(ctx context.Context, req any) (any, error) {
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(StreamServerServer).Route(ctx, req.(*SimpleRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _StreamServer_ListValue_Handler(srv any, stream grpc.ServerStream) error {
+func _StreamServer_ListValue_Handler(srv interface{}, stream grpc.ServerStream) error {
 	m := new(SimpleRequest)
 	if err := stream.RecvMsg(m); err != nil {
 		return err

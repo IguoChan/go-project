@@ -1,10 +1,11 @@
 syntax = "proto3";
 
-option go_package = "/hello/simplepb";
+option go_package = "github.com/IguoChan/go-project/api/genproto/demo_app//simplepb";
 
-package aaapb;
+package simplepb;
 
 import "google/api/annotations.proto";
+//import "validate/validate.proto";
 
 // 定义发送请求信息
 message SimpleRequest{

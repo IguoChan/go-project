@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/IguoChan/go-project/pkg/util"
+
 	"github.com/IguoChan/go-project/api/genproto/demo_app/simplepb"
 	runtime2 "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/sirupsen/logrus"
@@ -14,6 +16,7 @@ import (
 
 type SimpleServer struct {
 	simplepb.UnimplementedSimpleServer
+	Ext string
 }
 
 func NewSimpleServer() SimpleServer {
@@ -34,7 +37,7 @@ func (s SimpleServer) Route(ctx context.Context, request *simplepb.SimpleRequest
 	hn, _ := os.Hostname()
 	res := &simplepb.SimpleResponse{
 		Code:  200,
-		Value: strconv.Itoa(os.Getpid()) + " DE " + hn + " " + request.Data + " " + time.Now().String(),
+		Value: strconv.FormatInt(util.GoroutineId(), 10) + " DE " + hn + " " + request.Data + " " + time.Now().String() + " " + s.Ext,
 	}
 	return res, nil
 }
